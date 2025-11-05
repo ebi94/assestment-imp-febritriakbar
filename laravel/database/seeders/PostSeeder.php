@@ -10,7 +10,6 @@ class PostSeeder extends Seeder
 {
     public function run(): void
     {
-        // Buat 50 data dummy
         Post::factory(50)->create();
     }
 }

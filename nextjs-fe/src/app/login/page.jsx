@@ -18,19 +18,13 @@ export default function LoginPage() {
     setError('')
 
     try {
-      const res = await axios.post(
-        'http://localhost:8000/api/login',
-        { email, password },
-        {
-          headers: { 'Content-Type': 'application/json' },
-          withCredentials: true
-        }
-      )
-
+      const res = await axios.post('http://localhost:8000/api/login', { email, password }, { withCredentials: true })
+      const token = res.data.token
+      localStorage.setItem('token', token)
       alert('Login successful!')
       window.location.href = '/posts'
     } catch (err) {
-      if (err.response && err.response.data && err.response.data.message) {
+      if (err.response?.data?.message) {
         setError(err.response.data.message)
       } else {
         setError(err.message || 'Login failed')
@@ -39,7 +33,6 @@ export default function LoginPage() {
       setLoading(false)
     }
   }
-
   return (
     <div className='min-h-screen bg-base-200 flex items-center justify-center px-4'>
       <div className='card w-full max-w-3xl shadow-xl bg-base-100'>

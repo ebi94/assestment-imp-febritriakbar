@@ -1,13 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { StickyNote, Pencil, Trash } from 'lucide-react'
+import { StickyNote, Pencil, Trash, Eye } from 'lucide-react'
 import axios from 'axios'
 
 export default function PostsPage() {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [editingPostId, setEditingPostId] = useState(null)
+  const [viewPost, setViewPost] = useState(null)
   const [saveError, setSaveError] = useState('')
   const [posts, setPosts] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
@@ -66,6 +67,11 @@ export default function PostsPage() {
     setTitle(post.title)
     setContent(post.content)
     document.getElementById('add-post-modal').showModal()
+  }
+
+  const handleView = post => {
+    setViewPost(post)
+    document.getElementById('view-post-modal').showModal()
   }
 
   const handleDelete = async id => {
@@ -191,6 +197,9 @@ export default function PostsPage() {
                         <td>{post.content}</td>
                         <td>{new Date(post.created_at).toLocaleDateString()}</td>
                         <td className='flex gap-2'>
+                          <button className='btn btn-sm btn-success' onClick={() => handleView(post)}>
+                            <Eye />
+                          </button>
                           <button className='btn btn-sm btn-warning' onClick={() => handleEdit(post)}>
                             <Pencil />
                           </button>
@@ -262,6 +271,26 @@ export default function PostsPage() {
             </button>
             <button type='submit' className='w-30 btn btn-primary'>
               Save
+            </button>
+          </div>
+        </form>
+      </dialog>
+      <dialog id='view-post-modal' className='modal'>
+        <form method='dialog' className='modal-box w-11/12 max-w-lg'>
+          <h3 className='font-bold text-xl border-b pb-2'>View Post</h3>
+
+          <div className='flex flex-col gap-3 mt-4'>
+            <h1 className='text-lg font-semibold'>{viewPost.title}</h1>
+            <p className='whitespace-pre-line'>{viewPost.content}</p>
+          </div>
+
+          <div className='modal-action mt-6'>
+            <button
+              type='button'
+              className='btn btn-secondary'
+              onClick={() => document.getElementById('view-post-modal').close()}
+            >
+              Close
             </button>
           </div>
         </form>

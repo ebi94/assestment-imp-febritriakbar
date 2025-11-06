@@ -49,4 +49,10 @@ class AuthController extends Controller
             'user' => $user,
         ]);
     }
+
+    public function logout(Request $req) 
+    {
+        $req->user()->tokens()->delete();
+        return response()->json(['message'=>'Logged out']);
+    }
 }

@@ -1,9 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { StickyNote } from 'lucide-react'
+import { StickyNote, Pencil, Trash } from 'lucide-react'
+import axios from 'axios'
 
 export default function PostsPage() {
+  const [title, setTitle] = useState('')
+  const [content, setContent] = useState('')
+  const [editingPostId, setEditingPostId] = useState(null)
+  const [saveError, setSaveError] = useState('')
   const [posts, setPosts] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -28,9 +33,76 @@ export default function PostsPage() {
     fetchPosts(currentPage)
   }, [currentPage])
 
-  const handleLogout = () => {
-    localStorage.removeItem('token')
-    window.location.href = '/login'
+  const handleSave = async e => {
+    e.preventDefault()
+    setSaveError('')
+
+    try {
+      if (editingPostId) {
+        await axios.put(
+          `http://localhost:8000/api/posts/${editingPostId}`,
+          { title, content },
+          { withCredentials: true }
+        )
+        alert('Post updated successfully!')
+      } else {
+        await axios.post('http://localhost:8000/api/posts', { title, content }, { withCredentials: true })
+        alert('Post added successfully!')
+      }
+
+      setTitle('')
+      setContent('')
+      setEditingPostId(null)
+      document.getElementById('add-post-modal').close()
+
+      fetchPosts(currentPage)
+    } catch (err) {
+      setSaveError(err.response?.data?.message || 'Failed to save post')
+    }
+  }
+
+  const handleEdit = post => {
+    setEditingPostId(post.id)
+    setTitle(post.title)
+    setContent(post.content)
+    document.getElementById('add-post-modal').showModal()
+  }
+
+  const handleDelete = async id => {
+    if (!confirm('Are you sure you want to delete this post?')) return
+
+    try {
+      await axios.delete(`http://localhost:8000/api/posts/${id}`, {
+        withCredentials: true
+      })
+      alert('Post deleted successfully!')
+      fetchPosts(currentPage)
+    } catch (err) {
+      console.error(err)
+      alert(err.response?.data?.message || 'Failed to delete post')
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(
+        'http://localhost:8000/api/logout',
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      )
+
+      localStorage.removeItem('token')
+
+      alert('Logged out successfully!')
+      window.location.href = '/login'
+    } catch (err) {
+      console.error(err)
+      alert(err.response?.data?.message || 'Failed to logout')
+    }
   }
 
   return (
@@ -84,7 +156,7 @@ export default function PostsPage() {
                   </a>
                 </li>
                 <div className='divider mt-0 mb-0'></div>
-                <li>
+                <li onClick={handleLogout}>
                   <a>Logout</a>
                 </li>
               </ul>
@@ -107,6 +179,7 @@ export default function PostsPage() {
                     <th>Title</th>
                     <th>Content</th>
                     <th>Date</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -117,6 +190,14 @@ export default function PostsPage() {
                         <td>{post.title}</td>
                         <td>{post.content}</td>
                         <td>{new Date(post.created_at).toLocaleDateString()}</td>
+                        <td className='flex gap-2'>
+                          <button className='btn btn-sm btn-warning' onClick={() => handleEdit(post)}>
+                            <Pencil />
+                          </button>
+                          <button className='btn btn-sm btn-error' onClick={() => handleDelete(post.id)}>
+                            <Trash />
+                          </button>
+                        </td>
                       </tr>
                     ))
                   ) : (
@@ -144,7 +225,47 @@ export default function PostsPage() {
             </>
           )}
         </div>
+        <button className='btn btn-primary mt-6' onClick={() => document.getElementById('add-post-modal').showModal()}>
+          Add New Post
+        </button>
       </main>
+
+      <dialog id='add-post-modal' className='modal'>
+        <form method='dialog' className='modal-box' onSubmit={handleSave}>
+          <h3 className='font-bold text-lg'>{editingPostId ? 'Edit Post' : 'Add New Post'}</h3>
+
+          <div className='flex flex-col gap-4 pt-4'>
+            <input
+              type='text'
+              placeholder='Post Title'
+              className='input input-bordered w-full'
+              required
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+            />
+            <textarea
+              placeholder='Post Content'
+              className='textarea textarea-bordered w-full'
+              required
+              value={content}
+              onChange={e => setContent(e.target.value)}
+            ></textarea>
+            {saveError && <p className='text-red-500'>{saveError}</p>}
+          </div>
+
+          <div className='modal-action'>
+            <button
+              className='w-30 btn btn-secondary'
+              onClick={() => document.getElementById('add-post-modal').close()}
+            >
+              Cancel
+            </button>
+            <button type='submit' className='w-30 btn btn-primary'>
+              Save
+            </button>
+          </div>
+        </form>
+      </dialog>
     </div>
   )
 }

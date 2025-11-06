@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Post;
+use Illuminate\Http\Request;
 
 class PostController extends Controller
 {
@@ -24,8 +23,15 @@ class PostController extends Controller
             'content' => 'nullable|string',
         ]);
 
-        $post = Post::create($request->all());
-        return response()->json($post, 201);
+        $post = Post::create([
+            'title' => $request->title,
+            'content' => $request->content,
+        ]);
+
+        return response()->json([
+            'message' => 'Post created successfully',
+            'data' => $post,
+        ], 201);
     }
 
     
@@ -47,12 +53,19 @@ class PostController extends Controller
         }
 
         $request->validate([
-            'title' => 'sometimes|required|string|max:255',
+            'title' => 'required|string|max:255',
             'content' => 'nullable|string',
         ]);
 
-        $post->update($request->all());
-        return response()->json($post);
+        $post->update([
+            'title' => $request->title,
+            'content' => $request->content,
+        ]);
+
+        return response()->json([
+            'message' => 'Post updated successfully',
+            'data' => $post,
+        ]);
     }
 
     
@@ -64,6 +77,9 @@ class PostController extends Controller
         }
 
         $post->delete();
-        return response()->json(['message' => 'Post deleted successfully']);
+
+        return response()->json([
+            'message' => 'Post deleted successfully',
+        ]);
     }
 }
